@@ -41,7 +41,7 @@ class BotFaceBook():
         print("Login succesfull")
 
 
-    def post_status(self, status_str: str = "just a status"):
+    def post_status(self, status_str: str = "Life is 10% what happens to you and 90% how you react to it."):
         valueXPath = '//div[@class="x1i10hfl x6umtig x1b1mbwd xaqea5y xav7gou x9f619 x1ypdohk xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x16tdsg8 x1hl2dhg xggy1nq x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xmjcpbm x107yiy2 xv8uw2v x1tfwpuw x2g32xy x78zum5 x1q0g3np x1iyjqo2 x1nhvcw1 x1n2onr6 xt7dq6l x1ba4aug x1y1aw1k xn6708d xwib8y2 x1ye3gou"]'
         status_box_button = self.driver.find_element(by=By.XPATH, value=valueXPath)                         
         status_box_button.click()
