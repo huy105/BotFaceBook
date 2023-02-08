@@ -1,0 +1,9 @@
+# ignore file txt
+*.txt
+# ignore folder
+__pycache__/
+envDriver/
+ND/
+TeXFile/
+# ignore file py
+/test.py
