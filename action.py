@@ -1,6 +1,10 @@
 from selenium import webdriver 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+import pyautogui as pag
+import time
 
 class BotFaceBook():
     def __init__(self, profile: str = 'Profile 1', dir_path: str = 'C:/Users/luong/AppData/Local/Google/Chrome/User Data') -> None:
@@ -58,3 +62,31 @@ class BotFaceBook():
         status_post_button = self.driver.find_element(by=By.XPATH, value=valueXPath)
         status_post_button.click()
 
+    def get_profile(self, num_profiles: int = 5):
+        """
+        open profile in new tab and get infomation
+        num_profiles is number of profiles you wanna get
+        """
+        
+        link = self.driver.find_element(By.XPATH, '//a[@href="/friends/"]')
+        action_chain = ActionChains(self.driver)
+        action_chain.key_down(Keys.CONTROL).click(link).key_up(Keys.CONTROL).perform()
+        self.driver.switch_to.window(self.driver.window_handles[-1])
+
+        list_profile = []
+        # loop to get multiple profile
+        for i in range(1, num_profiles + 1):
+            
+            profile_getted = self.driver.find_element(By.XPATH, f'//div[@class="xsag5q8"]/div/div[{i}]')
+            action_chain.key_down(Keys.CONTROL).click(profile_getted).key_up(Keys.CONTROL).perform()
+            self.driver.switch_to.window(self.driver.window_handles[-1])
+            
+            url_profile = self.driver.current_url[0:33] + self.driver.current_url[45:]
+            list_profile.append(url_profile)
+
+            pag.hotkey('ctrl', 'w')
+            self.driver.switch_to.window(self.driver.window_handles[1])
+            time.sleep(2)
+
+        print('-------------------------------profile-------------------------------')
+        print(list_profile)

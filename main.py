@@ -8,5 +8,6 @@ if __name__ == '__main__':
     status_fb = "Life is 10% what happens to you and 90% how you react to it." 
     bot_1.get_fb()
     # bot_1.sign_in_fb(user_name, user_pass)
-    bot_1.post_status(status_fb)
-    time.sleep(20)
+    # bot_1.post_status(status_fb)
+    bot_1.get_profile()
+    time.sleep(5)
