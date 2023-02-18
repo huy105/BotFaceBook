@@ -116,7 +116,6 @@ class BotFaceBook():
                 if tries_time > 5:
                     break
             
-            time.sleep(20)
             count = 0
             for e in list_element_comment:
                 ActionChains(self.driver).click(e).send_keys(random.choice(list_comment)).send_keys(Keys.ENTER).perform()
