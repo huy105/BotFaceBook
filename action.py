@@ -3,6 +3,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from typing import List
+import random
 import pyautogui as pag
 import time
 
@@ -90,3 +92,38 @@ class BotFaceBook():
 
         print('-------------------------------profile-------------------------------')
         print(list_profile)
+
+    def comment_timeline(self, profile_url: str, num_post: int = 1, list_comment: List = ['.']):
+        """
+        profile_url: url of profile which you wanna comment
+        num_post: number of status,.. you wanna comment
+        """
+        self.driver.get(profile_url)
+    
+        try:
+            list_element_comment = self.driver.find_elements(By.XPATH, '//div[@class="x1n2onr6"]/div[@aria-label= "Viết bình luận..."]')
+            num_post_get = len(list_element_comment)
+            amount_scroll = 0
+            tries_time = 0
+
+            while num_post_get < num_post:
+                list_element_comment = self.driver.find_elements(By.XPATH, '//div[@class="x1n2onr6"]/div[@aria-label= "Viết bình luận..."]')
+                num_post_get = len(list_element_comment)
+                ActionChains(self.driver).scroll_by_amount(0, amount_scroll).perform()
+                
+                amount_scroll += 2000
+                tries_time += 1
+                if tries_time > 5:
+                    break
+            
+            time.sleep(20)
+            count = 0
+            for e in list_element_comment:
+                ActionChains(self.driver).click(e).send_keys(random.choice(list_comment)).send_keys(Keys.ENTER).perform()
+                count += 1
+                if count == num_post + 1: 
+                    break
+                time.sleep(20)
+            
+        except:
+            print("Could not find element.")
