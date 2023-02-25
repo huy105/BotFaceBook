@@ -7,6 +7,7 @@ from typing import List
 import random
 import pyautogui as pag
 import time
+import os
 
 class BotFaceBook():
     def __init__(self, profile: str = 'Profile 1', dir_path: str = 'C:/Users/luong/AppData/Local/Google/Chrome/User Data') -> None:
@@ -107,22 +108,64 @@ class BotFaceBook():
             tries_time = 0
 
             while num_post_get < num_post:
+                ActionChains(self.driver).scroll_by_amount(0, amount_scroll).perform()
                 list_element_comment = self.driver.find_elements(By.XPATH, '//div[@class="x1n2onr6"]/div[@aria-label= "Viết bình luận..."]')
                 num_post_get = len(list_element_comment)
-                ActionChains(self.driver).scroll_by_amount(0, amount_scroll).perform()
                 
                 amount_scroll += 2000
                 tries_time += 1
                 if tries_time > 5:
                     break
-            
             count = 0
             for e in list_element_comment:
                 ActionChains(self.driver).click(e).send_keys(random.choice(list_comment)).send_keys(Keys.ENTER).perform()
                 count += 1
-                if count == num_post + 1: 
+                if count == num_post:
                     break
-                time.sleep(20)
-            
         except:
             print("Could not find element.")
+
+
+    def get_status(self, profile_url: str, data_path: str, num_status: int = 1, ):
+        """
+        There is 2 kinds of status, ones is with image(or share smt), second is only string
+        profile_url: url of profile which you wanna get status
+        data_path: path of file text we save status 
+        num_status: number of status,.. you wanna get
+        """
+        self.driver.get(profile_url)
+        self.driver.implicitly_wait(5)
+    
+        list_element_status1 = self.driver.find_elements(By.XPATH, "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r x126k92a']")
+        list_element_status2 = self.driver.find_elements(By.XPATH, "//div[@class='xzsf02u xngnso2 xo1l8bm x1qb5hxa']")
+        
+        num_post_get = len(list_element_status1) + len(list_element_status2) 
+        amount_scroll = 0
+        tries_time = 0
+        
+        while num_post_get < num_status:
+            ActionChains(self.driver).scroll_by_amount(0, amount_scroll).perform()
+            self.driver.implicitly_wait(5)
+            
+            list_element_status1 = self.driver.find_elements(By.XPATH, "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r x126k92a']")
+            list_element_status2 = self.driver.find_elements(By.XPATH, "//div[@class='xzsf02u xngnso2 xo1l8bm x1qb5hxa']")
+            num_post_get = len(list_element_status1) + len(list_element_status2) 
+            
+            amount_scroll += 2000
+            tries_time += 1
+            if tries_time > 5:
+                break
+        
+        if os.path.isfile(data_path):
+            action = 'a'
+        else:
+            action = 'x'
+        
+        new_list = list_element_status1 + list_element_status2
+        print(len(new_list))
+        count = 0
+        with open(data_path, action, encoding="utf-8") as f:
+            for e in (new_list):
+                f.write(e.text + '\n')
+                if count == num_status:
+                    break

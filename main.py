@@ -11,6 +11,7 @@ if __name__ == '__main__':
     # bot_1.post_status(status_fb)
     # bot_1.get_profile()
     fb_target = 'https://www.facebook.com/kimkhanh.nguyen.129'
-    list_comment = ['.....', 'tuyetvoiqua', 'như cmt trên']
-    bot_1.comment_timeline(fb_target, 2, list_comment)
+    # bot_1.comment_timeline(fb_target, 2, list_comment)
+    data_path = 'E:/Data/AI_Files/KLTN/data_status.txt'
+    bot_1.get_status(fb_target, data_path, 5)
     time.sleep(5)
