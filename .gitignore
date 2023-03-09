@@ -5,5 +5,7 @@ __pycache__/
 envDriver/
 ND/
 TeXFile/
+data/
 # ignore file py
 /test.py
+/test1.py
