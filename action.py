@@ -12,6 +12,9 @@ import time
 import os
 
 class BotFaceBook():
+    
+    list_react = ['Thích', 'Yêu Thích', 'Thương thương', 'Haha', 'Wow', 'Buồn', 'Phẫn nộ']
+
     def __init__(self, profile: str = 'Profile 1', dir_path: str = 'C:/Users/luong/AppData/Local/Google/Chrome/User Data') -> None:
         
         """
@@ -24,7 +27,6 @@ class BotFaceBook():
         self.options.add_argument('--profile-directory=' + profile)
         self.ser = Service("E:/Data/AI_Files/KLTN/envDriver/chromedriver.exe")
         self.driver = webdriver.Chrome(service= self.ser, chrome_options= self.options)
-
 
     def get_fb(self, url: str = 'https://vi-vn.facebook.com/'):
         self.driver.get(url)
@@ -135,22 +137,28 @@ class BotFaceBook():
         data_path: path of file text we save status 
         num_status: number of status,.. you wanna get
         """
+        xpath_txt = "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r x126k92a']"
+        xpath_post = "//span[@class='x4k7w5x x1h91t0o x1h9r5lt xv2umb2 x1beo9mf xaigb6o x12ejxvf x3igimt xarpa2k xedcshv x1lytzrv x1t2pt76 x7ja8zs x1qrby5j x1jfb8zj']"
+        xpath_stt1 = "//img[@class='x1ey2m1c xds687c x5yr21d x10l6tqk x17qophe x13vifvy xh8yej3 xl1xv1r']"
+        xpath_stt2 = "//div[@class='xzsf02u xngnso2 xo1l8bm x1qb5hxa']"
+
         self.driver.get(profile_url)
         self.driver.implicitly_wait(5)
     
-        list_ele_stt1 = self.driver.find_elements(By.XPATH, "//img[@class='x1ey2m1c xds687c x5yr21d x10l6tqk x17qophe x13vifvy xh8yej3 xl1xv1r']")
-        list_ele_stt2 = self.driver.find_elements(By.XPATH, "//div[@class='xzsf02u xngnso2 xo1l8bm x1qb5hxa']")
+        list_ele_stt1 = self.driver.find_elements(By.XPATH, xpath_stt1)
+        list_ele_stt2 = self.driver.find_elements(By.XPATH, xpath_stt2)
         
         num_post_get = len(list_ele_stt1) + len(list_ele_stt2) 
         amount_scroll = 0
         tries_time = 0
         
+        # get element untill enough
         while num_post_get < num_status:
             ActionChains(self.driver).scroll_by_amount(0, amount_scroll).perform()
             self.driver.implicitly_wait(5)
             
-            list_ele_stt1 = self.driver.find_elements(By.XPATH, "//img[@class='x1ey2m1c xds687c x5yr21d x10l6tqk x17qophe x13vifvy xh8yej3 xl1xv1r']")
-            list_ele_stt2 = self.driver.find_elements(By.XPATH, "//div[@class='xzsf02u xngnso2 xo1l8bm x1qb5hxa']")
+            list_ele_stt1 = self.driver.find_elements(By.XPATH, xpath_stt1)
+            list_ele_stt2 = self.driver.find_elements(By.XPATH, xpath_stt2)
             num_post_get = len(list_ele_stt1) + len(list_ele_stt2) 
             
             amount_scroll += 2000
@@ -169,25 +177,23 @@ class BotFaceBook():
         
         count = 0
         with open(data_status_path, action, encoding="utf-8") as f:
-            # for e in (list_ele_stt2):
-            #     if count == num_status:
-            #         break
-                
-            #     id_data += 1
-            #     f.write(id_data + '\n')
-            #     f.write(e.text + '\n')
-            #     count += 1
-
-            for e_image in (list_ele_stt1):
+            for e in (list_ele_stt1 + list_ele_stt2):
                 if count == num_status:
                     break
-                url_image =  e_image.get_attribute('src')
-                xpath_txt = "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r x126k92a']"
-                e = self.driver.find_element(locate_with(By.XPATH, xpath_txt).above(e_image))
                 
                 id_data += 1
-                urllib.request.urlretrieve(url_image, images_path + '/{}.png'.format(id_data))
-                f.write(str(id_data) + '\n')
+                if count < len(list_ele_stt1):
+                    url_image =  e.get_attribute('src')
+                    urllib.request.urlretrieve(url_image, images_path + '/{}.png'.format(id_data))
+                    e = self.driver.find_element(locate_with(By.XPATH, xpath_txt).above(e))
+
+                e_post = self.driver.find_element(locate_with(By.XPATH, xpath_post).above(e))
+                ActionChains(self.driver).key_down(Keys.CONTROL).click(e_post).key_up(Keys.CONTROL).perform()
+                url_post = self.driver.current_url
+                pag.hotkey('ctrl', 'w')
+                
+                f.write(id_data + '\n')
+                f.write(url_post + '\n')
                 f.write(e.text + '\n')
                 count += 1
                 
@@ -197,42 +203,25 @@ class BotFaceBook():
             f.write(str(id_data))  
             f.close()
 
-    def react_status(self, profile_url: str, emotion: int, num_status: int = 1):
+    def react_status(self, post_url_id: str, emotion: int, num_status: int = 1):
         """
         emotion: is the kind of emotion we want to react
         (0: Thích, 1: Yêu Thích, 2: Thương Thương, 3: Haha, 4: Wow, 5: Buồn, 6: Phẫn nộ) 
         num_status: number of status,.. you want react
         """
-        self.driver.get(profile_url)
+        self.driver.get(post_url_id)
         self.driver.implicitly_wait(5)
-        list_react = ['Thích', 'Yêu Thích', 'Thương thương', 'Haha', 'Wow', 'Buồn', 'Phẫn nộ']
-        hover_e_react = self.driver.find_elements(By.XPATH, '//div[@aria-label="Thích"]')
+        hover_e_react = self.driver.find_element(By.XPATH, '//div[@aria-label="Thích"]')
 
-        while len(hover_e_react) < num_status:
-            ActionChains(self.driver).scroll_by_amount(0, amount_scroll).perform()
-            self.driver.implicitly_wait(5)
-            hover_e_react = self.driver.find_elements(By.XPATH, '//div[@aria-label="Thích"]')
-            
-            amount_scroll += 2000
-            tries_time += 1
-            if tries_time > 5:
-                break
-
-        count = 0        
-        for e in hover_e_react:
-            if count == num_status:
-                break
-
-            ActionChains(self.driver).move_to_element(e).perform()
-            self.driver.implicitly_wait(5)
-            try:
-                element = self.driver.find_element(By.XPATH, "//div[@aria-label='{}' and @role='button']".format(list_react[emotion]))
-                if element.is_displayed():
-                    element.click()
-                else:
-                    print("Element is not visible.")
-            except:
-                print("Could not find element.")
-            
-            count += 1
-            time.sleep(5)
+        ActionChains(self.driver).move_to_element(hover_e_react).perform()
+        self.driver.implicitly_wait(5)
+        try:
+            element = self.driver.find_element(By.XPATH, "//div[@aria-label='{}' and @role='button']".format(self.list_react[emotion]))
+            if element.is_displayed():
+                element.click()
+            else:
+                print("Element is not visible.")
+        except:
+            print("Could not find element.")
+        
+        time.sleep(5)
