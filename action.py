@@ -103,17 +103,18 @@ class BotFaceBook():
         profile_url: url of profile which you wanna comment
         num_post: number of status,.. you wanna comment
         """
+        xpath_comment = '//div[@class="x1n2onr6"]/div[@aria-label= "Viết bình luận..."]'
         self.driver.get(profile_url)
     
         try:
-            list_element_comment = self.driver.find_elements(By.XPATH, '//div[@class="x1n2onr6"]/div[@aria-label= "Viết bình luận..."]')
+            list_element_comment = self.driver.find_elements(By.XPATH, xpath_comment)
             num_post_get = len(list_element_comment)
             amount_scroll = 0
             tries_time = 0
 
             while num_post_get < num_post:
                 ActionChains(self.driver).scroll_by_amount(0, amount_scroll).perform()
-                list_element_comment = self.driver.find_elements(By.XPATH, '//div[@class="x1n2onr6"]/div[@aria-label= "Viết bình luận..."]')
+                list_element_comment = self.driver.find_elements(By.XPATH, xpath_comment)
                 num_post_get = len(list_element_comment)
                 
                 amount_scroll += 2000
@@ -189,6 +190,7 @@ class BotFaceBook():
 
                 e_post = self.driver.find_element(locate_with(By.XPATH, xpath_post).above(e))
                 ActionChains(self.driver).key_down(Keys.CONTROL).click(e_post).key_up(Keys.CONTROL).perform()
+                self.driver.switch_to.window(self.driver.window_handles[-1])
                 url_post = self.driver.current_url
                 pag.hotkey('ctrl', 'w')
                 
@@ -203,25 +205,26 @@ class BotFaceBook():
             f.write(str(id_data))  
             f.close()
 
-    def react_status(self, post_url_id: str, emotion: int, num_status: int = 1):
+    def react_status(self, emotion: int, num_status: int = 1):
         """
         emotion: is the kind of emotion we want to react
         (0: Thích, 1: Yêu Thích, 2: Thương Thương, 3: Haha, 4: Wow, 5: Buồn, 6: Phẫn nộ) 
         num_status: number of status,.. you want react
         """
-        self.driver.get(post_url_id)
         self.driver.implicitly_wait(5)
-        hover_e_react = self.driver.find_element(By.XPATH, '//div[@aria-label="Thích"]')
-
+        xpath_react = "//div[@aria-label='{}' and @role='button']".format(self.list_react[emotion])
+        xpath_hover = "//div[@class='x1i10hfl x1qjc9v5 xjbqb8w xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg x1ja2u2z x1t137rt x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x3nfvp2 x1q0g3np x87ps6o x1lku1pv x1a2a7pz x5ve5x3"
+        
+        hover_e_react = self.driver.find_element(By.XPATH, xpath_hover)
         ActionChains(self.driver).move_to_element(hover_e_react).perform()
         self.driver.implicitly_wait(5)
         try:
-            element = self.driver.find_element(By.XPATH, "//div[@aria-label='{}' and @role='button']".format(self.list_react[emotion]))
+            element = self.driver.find_element(By.XPATH, xpath_react)
             if element.is_displayed():
                 element.click()
             else:
                 print("Element is not visible.")
         except:
-            print("Could not find element.")
+            print("Already or cannot find")
         
         time.sleep(5)
