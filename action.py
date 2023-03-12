@@ -138,8 +138,9 @@ class BotFaceBook():
         data_path: path of file text we save status 
         num_status: number of status,.. you wanna get
         """
-        xpath_txt = "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r x126k92a']"
-        xpath_post = "//span[@class='x4k7w5x x1h91t0o x1h9r5lt xv2umb2 x1beo9mf xaigb6o x12ejxvf x3igimt xarpa2k xedcshv x1lytzrv x1t2pt76 x7ja8zs x1qrby5j x1jfb8zj']"
+        xpath_txt_stt1 = "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r x126k92a']/div[@dir='auto']"
+        xpath_txt_stt2 = "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r']"
+        xpath_post = "//a[@class='x1i10hfl xjbqb8w x6umtig x1b1mbwd xaqea5y xav7gou x9f619 x1ypdohk xt0psk2 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz x1heor9g xt0b8zv xo1l8bm']"
         xpath_stt1 = "//img[@class='x1ey2m1c xds687c x5yr21d x10l6tqk x17qophe x13vifvy xh8yej3 xl1xv1r']"
         xpath_stt2 = "//div[@class='xzsf02u xngnso2 xo1l8bm x1qb5hxa']"
 
@@ -183,20 +184,27 @@ class BotFaceBook():
                     break
                 
                 id_data += 1
+                f.write(str(id_data) + '\n')
                 if count < len(list_ele_stt1):
                     url_image =  e.get_attribute('src')
                     urllib.request.urlretrieve(url_image, images_path + '/{}.png'.format(id_data))
-                    e = self.driver.find_element(locate_with(By.XPATH, xpath_txt).above(e))
+                    e = self.driver.find_element(locate_with(By.XPATH, xpath_txt_stt1).above(e))
 
+                # find and open each post on new tab to get url and status
                 e_post = self.driver.find_element(locate_with(By.XPATH, xpath_post).above(e))
                 ActionChains(self.driver).key_down(Keys.CONTROL).click(e_post).key_up(Keys.CONTROL).perform()
                 self.driver.switch_to.window(self.driver.window_handles[-1])
-                url_post = self.driver.current_url
-                pag.hotkey('ctrl', 'w')
                 
-                f.write(id_data + '\n')
+                url_post = self.driver.current_url
+                if count < len(list_ele_stt1):
+                    e_text = self.driver.find_element(By.XPATH, xpath_txt_stt1)
+                else:
+                    e_text = self.driver.find_element(By.XPATH, xpath_txt_stt2)
+
+                f.write(e_text.text + '\n')
                 f.write(url_post + '\n')
-                f.write(e.text + '\n')
+                self.driver.execute_script("window.close();")
+                self.driver.switch_to.window(self.driver.window_handles[-1])
                 count += 1
                 
             f.close()
