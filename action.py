@@ -85,7 +85,7 @@ class BotFaceBook():
             url_profile = self.driver.current_url[0:33] + self.driver.current_url[45:]
             list_profile.append(url_profile)
 
-            pag.hotkey('ctrl', 'w')
+            self.driver.execute_script("window.close();")
             self.driver.switch_to.window(self.driver.window_handles[1])
             time.sleep(2)
 
