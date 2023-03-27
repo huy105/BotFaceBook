@@ -5,10 +5,13 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.relative_locator import locate_with
 from typing import List
-import pyautogui as pag
+from ele_excep import handle_element
 import urllib.request
+import pymongo
 import random
+import gridfs
 import time
+import bson
 import os
 
 class BotFaceBook():
@@ -28,6 +31,8 @@ class BotFaceBook():
         self.ser = Service("E:/Data/AI_Files/KLTN/envDriver/chromedriver.exe")
         self.driver = webdriver.Chrome(service= self.ser, chrome_options= self.options)
         self.driver.implicitly_wait(5)
+        self.client = pymongo.MongoClient('mongodb://localhost:27017')
+
 
     def get_fb(self, url: str = 'https://vi-vn.facebook.com/'):
         self.driver.get(url)
@@ -125,13 +130,16 @@ class BotFaceBook():
             print("Could not find element.")
 
 
-    def get_status(self, profile_url: str, num_status: int, id_path: str, data_status_path: str, images_path: str):
+    def get_status(self, profile_url: str, num_status: int, images_path: str):
         """
         There is 2 kinds of status, ones is with image(or share smt), second is only string
         profile_url: url of profile which you wanna get status
         data_path: path of file text we save status 
         num_status: number of status,.. you wanna get
         """
+        status_doc = self.client['FBdata'].Status
+        gridfs_obs = gridfs.GridFS(self.client['FBdata'])
+        
         xpath_txt_stt1 = "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r x126k92a']/div[@dir='auto']"
         xpath_txt_stt2 = "//div[@class='x11i5rnm xat24cr x1mh8g0r x1vvkbs xdj266r']"
         xpath_post = "//a[@class='x1i10hfl xjbqb8w x6umtig x1b1mbwd xaqea5y xav7gou x9f619 x1ypdohk xt0psk2 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz x1heor9g xt0b8zv xo1l8bm']"
@@ -139,12 +147,10 @@ class BotFaceBook():
         xpath_stt2 = "//div[@class='xzsf02u xngnso2 xo1l8bm x1qb5hxa']"
 
         self.driver.get(profile_url)
-    
         list_ele_stt1 = self.driver.find_elements(By.XPATH, xpath_stt1)
         list_ele_stt2 = self.driver.find_elements(By.XPATH, xpath_stt2)
-        
         num_post_get = len(list_ele_stt1) + len(list_ele_stt2) 
-        amount_scroll = 0
+        amount_scroll = 1000
         tries_time = 0
         
         # get element untill enough
@@ -155,55 +161,47 @@ class BotFaceBook():
             list_ele_stt2 = self.driver.find_elements(By.XPATH, xpath_stt2)
             num_post_get = len(list_ele_stt1) + len(list_ele_stt2) 
             
-            amount_scroll += 2000
             tries_time += 1
             if tries_time > 5:
                 break
         
-        with open(id_path, 'r', encoding="utf-8") as f:
-            id_data = int(f.read())
-            f.close()
-
-        if os.path.isfile(data_status_path):
-            action = 'a'
-        else:
-            action = 'x'
-        
+        list_data = []
         count = 0
-        with open(data_status_path, action, encoding="utf-8") as f:
-            for e in (list_ele_stt1 + list_ele_stt2):
-                if count == num_status:
-                    break
-                
-                id_data += 1
-                f.write(str(id_data) + '\n')
-                if count < len(list_ele_stt1):
-                    url_image =  e.get_attribute('src')
-                    urllib.request.urlretrieve(url_image, images_path + '/{}.png'.format(id_data))
-                    e = self.driver.find_element(locate_with(By.XPATH, xpath_txt_stt1).above(e))
+        for e in (list_ele_stt1 + list_ele_stt2):
+            if count == num_status:
+                break
 
-                # find and open each post on new tab to get url and status
-                e_post = self.driver.find_element(locate_with(By.XPATH, xpath_post).above(e))
-                ActionChains(self.driver).key_down(Keys.CONTROL).click(e_post).key_up(Keys.CONTROL).perform()
-                self.driver.switch_to.window(self.driver.window_handles[-1])
-                
-                url_post = self.driver.current_url
-                if count < len(list_ele_stt1):
-                    e_text = self.driver.find_element(By.XPATH, xpath_txt_stt1)
-                else:
-                    e_text = self.driver.find_element(By.XPATH, xpath_txt_stt2)
+            # find and open each post on new tab to get url and status
+            e_post = self.driver.find_element(locate_with(By.XPATH, xpath_post).above(e))
+            ActionChains(self.driver).key_down(Keys.CONTROL).click(e_post).key_up(Keys.CONTROL).perform()
+            self.driver.switch_to.window(self.driver.window_handles[-1])
+            url_post = self.driver.current_url
 
-                f.write(e_text.text + '\n')
-                f.write(url_post + '\n')
-                self.driver.execute_script("window.close();")
-                self.driver.switch_to.window(self.driver.window_handles[-1])
-                count += 1
-                
-            f.close()
-            
-        with open(id_path, 'w', encoding="utf-8") as f:
-            f.write(str(id_data))  
-            f.close()
+            if status_doc.find_one({'_id': url_post}) is not None:
+                break
+            # if status data is first kind
+            if count < len(list_ele_stt1):
+                e_text = handle_element(self.driver, xpath_txt_stt1)
+                url_image =  e.get_attribute('src')
+                urllib.request.urlretrieve(url_image, images_path + '/temp_image.png')
+
+                with open(images_path + '/temp_image.png', 'rb') as f:
+                    imageData = f.read()
+                    f.close()
+
+                imageId = gridfs_obs.put(imageData, filename=f'{url_post[25:]}.png')
+                data = {'_id': url_post, 'status': e_text, 'image': imageId}
+
+            else:
+                e_text = handle_element(self.driver, xpath_txt_stt2)
+                data = {'_id': url_post, 'status': e_text}
+
+            list_data.append(data)
+            self.driver.execute_script("window.close();")
+            self.driver.switch_to.window(self.driver.window_handles[-1])
+            count += 1
+
+        status_doc.insert_many(list_data)
 
     def react_status(self, emotion: int):
         """
